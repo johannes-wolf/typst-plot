@@ -1,0 +1,309 @@
+
+/* Tic settings */
+#let plot-tics(every: 1, tics: (), mirror: true, stroke: black + .5pt, fill: black, angle: 0deg, side: none, format: none, length: .5em) = (
+  every: every, tics: tics, mirror: mirror, stroke: stroke, fill: fill, angle: angle, side: none, format: format, length: length,
+)
+
+/* Data settings */
+#let plot-data(data, x-axis: "x", y-axis: "y", label: "data", stroke: "auto") = (
+  data: data, label: label, stroke: stroke, x-axis: x-axis, y-axis: y-axis
+)
+
+/* Axis settings */
+#let plot-axis(range: (0, 1,), label: none, stroke: black + .5pt) = (
+  range: range, label: label, label-offset: 3em, stroke: stroke, side: none,
+)
+
+
+// Returns interpolated endpoints of line between `points` inside `x-range` and `y-range` or none
+#let lines-for-points(points, x-range, y-range) = {
+  let min-x = x-range.at(0)
+  let max-x = x-range.at(1)
+  let min-y = y-range.at(0)
+  let max-y = y-range.at(1)
+
+  let line-crosses-range(a, b) = {
+    // Returns if point p is inside min/max ranges
+    let in-range(p) = {
+      return p.at(0) >= min-x and p.at(0) <= max-x and p.at(1) >= min-y and p.at(1) <= max-y
+    }
+
+    // Returns true if min(v1, v2) < x < max(v1, v2) => if v1 and v2 "cross" x
+    let crosses-x(v1, v2, x) = {
+      return ((v2 - x) * (v1 - x)) <= 0
+    }
+
+    // If one point is in the range, return true
+    if in-range(a) or in-range(b) {
+      return true
+    }
+
+    // Count edge crossing, if == 2, return true
+    let num-crossings = 0
+    if crosses-x(a.at(0), b.at(0), min-x) { num-crossings += 1 }
+    if crosses-x(a.at(0), b.at(0), max-x) { num-crossings += 1 }
+    if crosses-x(a.at(1), b.at(1), min-y) { num-crossings += 1 }
+    if crosses-x(a.at(1), b.at(1), max-y) { num-crossings += 1 }
+
+    return num-crossings >= 2
+  }
+
+  // Return linear interpolated point p on line ab
+  let lin-interpolated-point(p, a, b) = {
+    let m = (a.at(1) - b.at(1)) / (a.at(0) - b.at(0))
+    let x = p.at(0)
+    let y = p.at(1)
+
+    if not line-crosses-range(a, b) {
+      return none
+    }
+    
+    if y > max-y {
+      x = x + (max-y - y) / m
+      y = max-y
+    } else if y < min-y {
+      x = x + (min-y - y) / m
+      y = min-y
+    }
+
+    if x > max-x {
+      y = y + m * (max-x - x)
+      x = max-x
+    } else if x < min-x {  
+      y = y + m * (min-x - x)
+      x = min-x
+    }
+    
+    return (x, y)
+  }
+
+  let lines = ()
+  let prev-p = none
+  for p in points {
+    if prev-p != none {
+      let a = lin-interpolated-point(prev-p, prev-p, p)
+      let b = lin-interpolated-point(p, prev-p, p)
+      if a != none and b != none and a != b {
+        lines.push((a, b))
+      }
+    }
+    prev-p = p
+  }
+  return lines
+}
+
+#let plot(data,
+          multi: false,
+
+          x-tics: plot-tics(),
+          y-tics: plot-tics(),
+          x2-tics: none,
+          y2-tics: none,
+          
+          x-axis: plot-axis(),
+          y-axis: plot-axis(),
+          x2-axis: none,
+          y2-axis: none,
+          
+          width: 10cm,
+          height: 10cm,
+          border-stroke: black + .5pt,
+  ) = {
+  let inset-x = 2.2em
+  let inset-y = 1.2em
+  let data-width = width - 2 * inset-x
+  let data-height = height - 2 * inset-y
+
+  let left-axis-x = 0cm
+  let right-axis-x = data-width
+  let top-axis-y = 0cm
+  let bottom-axis-y = data-height
+
+  // Translate data point pt to relative plot coordinates
+  let point-to-plot(pt, x-range, y-range) = {
+    let x-scale = data-width / (x-range.at(1) - x-range.at(0))
+    let y-scale = data-height / (y-range.at(1) - y-range.at(0))
+  
+    return (x-scale * (pt.at(0) - x-range.at(0)),
+            data-height - y-scale * (pt.at(1) - y-range.at(0)))
+  }
+
+  /* All axes */
+  let axes = (
+    x: x-axis, x2: x2-axis,
+    y: y-axis, y2: y2-axis,
+  )
+
+  /* All tics */
+  let tics = (
+    x: x-tics, x2: x2-tics,
+    y: y-tics, y2: y2-tics,
+  )
+
+  /* Default axis side */
+  let tic-side = (
+    x: "bottom", x2: "top",
+    y: "left", y2: "right",
+  )
+
+  /* Map side to opposite side */
+  let other-side = (
+    left: "right", right: "left",
+    top: "bottom", bottom: "top",
+  )
+
+  // Returns a length on `range` scaled to `size`
+  let length-on-range(range, size, value) = {
+    let scale = size / (range.at(1) - range.at(0))
+    return (value - range.at(0)) * scale
+  }
+
+  /* Linear interpolate */
+  let between(x, y, m) = {
+    return x * (1 - m) + y * m
+  }
+
+  let tic-position(axis, tics, value, side) = {
+    let pt = none
+    let angle = 0deg
+    let range = axis.range
+    if range.at(0) > value or value > range.at(1) {
+      return none
+    }
+    
+    if side == "left" {
+      pt = (left-axis-x, data-height - length-on-range(range, data-height, value))
+      angle = 0deg
+    } else if side == "right" {
+      pt = (right-axis-x, data-height - length-on-range(range, data-height, value))
+      angle = 180deg
+    } else if side == "bottom" {
+      pt = (length-on-range(range, data-width, value), bottom-axis-y)
+      angle = 270deg
+    } else if side == "top" {
+      pt = (length-on-range(range, data-width, value), top-axis-y)
+      angle = 90deg
+    }
+
+    return (position: pt, angle: angle)
+  }
+
+  let render-tic-mark(axis, tics, pt, angle) = {
+    place(dx: inset-x, dy: inset-y, { line(start: pt, angle: angle, length: tics.length, stroke: tics.stroke) })
+  }
+
+  let render-tic-label(tics, pt, value, side) = {
+    let format = tics.format
+    if format == none {
+      format = (v => str(int(v*100)/100.0))
+    }
+
+    if type(value) == "array" {
+      value = value.at(1)
+    }
+
+    style(st => {
+      let label = rotate(origin: center + horizon, tics.angle)[ #format(value) ]
+      let bounds = measure(label, st)
+
+      let offset = (0cm, 0cm)
+      if side == "left" { offset = (-.5em - bounds.width, -bounds.height / 2) }
+      if side == "right" { offset = (.5em, -bounds.height / 2) }
+      if side == "top" { offset = (-bounds.width / 2, -bounds.height - .5em) }
+      if side == "bottom" { offset = (-bounds.width / 2, .5em) }
+
+      place(dx: pt.at(0) + offset.at(0) + inset-x, dy: pt.at(1) + offset.at(1) + inset-y, label)
+    })
+  }
+
+  let render-tics(axis, tics, side, mirror: false) = {
+    /* Render calculated ticks */
+    if tics.every != 0 {
+      let scale = 1 / tics.every
+      for t in range(int(axis.range.at(0) * scale), int(axis.range.at(1) * scale + 1.5)) {
+        let v = t / scale
+        let pos = tic-position(axis, tics, v, side)
+        if pos == none { continue }
+        
+        render-tic-mark(axis, tics, pos.position, pos.angle)
+
+        if not mirror {
+          render-tic-label(tics, pos.position, v, side)
+        }
+      }
+    }
+
+    /* Render fixed tics */
+    for v in tics.tics {
+      let value = v
+      let label = v
+      if type(value) == "array" {
+        value = v.at(0)
+        label = v.at(1)
+      }
+      
+      let pos = tic-position(axis, tics, value, side)
+      render-tic-mark(axis, tics, pos.position, pos.angle)
+
+      if not mirror {
+        render-tic-label(tics, pos.position, label, side)
+      }
+    }
+  }
+
+  block(width: width, height: height, {
+    /* Plot point array */
+    let plot-data(data, n) = {
+      let colors = (black, red, blue, green)
+      
+      let stroke = data.stroke
+      if stroke == "auto" {
+        stroke = colors.at(calc.mod(n, colors.len())) + .5pt
+      }
+      
+      let plot-line-segment(a, b) = {
+        line(start: a, end: b, stroke: stroke)
+      }
+      
+      let x-range = axes.at(data.x-axis).range
+      let y-range = axes.at(data.y-axis).range
+      for l in lines-for-points(data.data, x-range, y-range) {
+        let a = point-to-plot(l.at(0), x-range, y-range)
+        let b = point-to-plot(l.at(1), x-range, y-range)
+        place(dx: inset-x , dy: inset-y)[ #plot-line-segment(a, b) ]
+      }
+    }
+
+    /* Plot graph(s) */
+    if multi {
+      let n = 0
+      for d in data {
+        plot-data(d, n)
+        n += 1
+      }
+    } else {
+      plot-data(data, 0)
+    }
+
+    /* Render tics */
+    for name, tic in tics {
+      if tic != none {
+        let side = tic.side
+        if side == none {
+          side = tic-side.at(name)
+        }
+  
+        let axis = axes.at(name)
+        render-tics(axis, tic, side, mirror: false)
+
+        if tic.mirror {
+          side = other-side.at(side)
+          render-tics(axis, tic, side, mirror: true)
+        }
+      }
+    }
+
+    /* Render border */
+    place(dx: inset-x, dy: inset-y, { rect(width: data-width, height: data-height, stroke: border-stroke) })
+  })
+}
