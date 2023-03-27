@@ -1,0 +1,10 @@
+#import "util.ty": plot-fn
+#import "../plot.ty": plot, plot-data, plot-tics, plot-axis
+
+#set page(width: 10cm, height: 7cm)
+
+#plot(plot-data(plot-fn(x => calc.sin(x), min: 0, max: 2*calc.pi, steps: 50)),
+      x-axis: plot-axis(range: (0, 2*calc.pi)),
+      y-axis: plot-axis(range: (-1, 1)),
+      width: 100%,
+      height: 100%)
