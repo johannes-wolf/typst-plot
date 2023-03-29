@@ -1,10 +1,10 @@
 #!/bin/sh
 set -eu
 
-for f in *.ty; do
+for f in *.typ; do
     echo "Building $f"
     typst "$f" && convert \
 		      -density 150 \
-		      "${f//.ty/.pdf}" \
-		      "${f//.ty/.png}"
+		      "${f//.typ/.pdf}" \
+		      "${f//.typ/.png}"
 done

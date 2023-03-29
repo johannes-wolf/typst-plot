@@ -1,4 +1,4 @@
-#import "plot.ty": plot, plot-data, plot-axis, plot-tics
+#import "plot.typ": plot, plot-data
 
 #let plot-fn(fn, min: -1, max: 1, steps: 100) = {
    let data = ()
@@ -11,10 +11,7 @@
 
 #figure(caption: [Simple plot])[
   #plot(plot-data(plot-fn(min: -2, max: 2, x => { return calc.pow(x, 3) })),
-    x-axis: plot-axis(range: (-1.2, 1.2)), 
-    y-axis: plot-axis(range: (-2, 2)),
-    y-tics: plot-tics(every: 1),
-    x-tics: plot-tics(every: 1),
+    y-tics: (every: 8),
     width: 10cm,
     height: 3cm)
   ]
@@ -25,14 +22,14 @@
          multi:true,
     width: 10cm, height: 5cm, 
 
-    x-axis: plot-axis(range: (-1, calc.pi * 2 + 1)),
-    x-tics: plot-tics(stroke: black, every: calc.pi, tics: (calc.pi/2,),
+    x-axis: (range: (-1, calc.pi * 2 + 1)),
+    x-tics: (stroke: black, every: calc.pi, tics: (calc.pi/2,),
 	              mirror: false,
 		      format: v => {return str(v/calc.pi) + math.pi}),
 
-    y-axis: plot-axis(range: (-2, 2)),
-    y-tics: plot-tics(stroke: green + .5pt, tics: (0, 1, 2)),
+    y-axis: (range: (-2, 2)),
+    y-tics: (stroke: green + .5pt, tics: (0, 1, 2)),
 
-    x2-axis: plot-axis(range: (0, calc.pi * 2 )),
-    x2-tics: plot-tics(stroke: red + .5pt, every: 1.5, mirror: false),)
+    x2-axis: (range: (0, calc.pi * 2 )),
+    x2-tics: (stroke: red + .5pt, every: 1.5, mirror: false),)
 ]
