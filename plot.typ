@@ -1,3 +1,5 @@
+#import "plot-util.typ": *
+
 /* Default settings */
 #let plot-defaults = (
   tic-length: .4em,
@@ -7,127 +9,48 @@
 
 /* Data settings */
 #let plot-data(data, x-axis: "x", y-axis: "y", label: "data", stroke: "auto") = (
-  data: data, label: label, stroke: stroke, x-axis: x-axis, y-axis: y-axis
+  data: data, stroke: stroke, x-axis: x-axis, y-axis: y-axis
 )
-
-/* private: Get dictionary value or return fallback */
-#let p-dict-get(d, key, fallback) = {
-  if d != none and key in d {
-    return d.at(key)
-  }
-  return fallback
-}
-
-// Returns interpolated endpoints of line between `points` inside `x-range` and `y-range` or none
-#let lines-for-points(points, x-range, y-range) = {
-  let min-x = x-range.at(0)
-  let max-x = x-range.at(1)
-  let min-y = y-range.at(0)
-  let max-y = y-range.at(1)
-
-  let line-crosses-range(a, b) = {
-    // Returns if point p is inside min/max ranges
-    let in-range(p) = {
-      return p.at(0) >= min-x and p.at(0) <= max-x and p.at(1) >= min-y and p.at(1) <= max-y
-    }
-
-    // Returns true if min(v1, v2) < x < max(v1, v2) => if v1 and v2 "cross" x
-    let crosses-x(v1, v2, x) = {
-      return ((v2 - x) * (v1 - x)) <= 0
-    }
-
-    // If one point is in the range, return true
-    if in-range(a) or in-range(b) {
-      return true
-    }
-
-    // Count edge crossing, if == 2, return true
-    let num-crossings = 0
-    if crosses-x(a.at(0), b.at(0), min-x) { num-crossings += 1 }
-    if crosses-x(a.at(0), b.at(0), max-x) { num-crossings += 1 }
-    if crosses-x(a.at(1), b.at(1), min-y) { num-crossings += 1 }
-    if crosses-x(a.at(1), b.at(1), max-y) { num-crossings += 1 }
-
-    return num-crossings >= 2
-  }
-
-  // Return linear interpolated point p on line ab
-  let lin-interpolated-point(p, a, b) = {
-    let m = (a.at(1) - b.at(1)) / (a.at(0) - b.at(0))
-    let x = p.at(0)
-    let y = p.at(1)
-
-    if not line-crosses-range(a, b) {
-      return none
-    }
-    
-    if y > max-y {
-      x = x + (max-y - y) / m
-      y = max-y
-    } else if y < min-y {
-      x = x + (min-y - y) / m
-      y = min-y
-    }
-
-    if x > max-x {
-      y = y + m * (max-x - x)
-      x = max-x
-    } else if x < min-x {  
-      y = y + m * (min-x - x)
-      x = min-x
-    }
-    
-    return (x, y)
-  }
-
-  let lines = ()
-  let prev-p = none
-  for p in points {
-    if prev-p != none {
-      let a = lin-interpolated-point(prev-p, prev-p, p)
-      let b = lin-interpolated-point(p, prev-p, p)
-      if a != none and b != none and a != b {
-        lines.push((a, b))
-      }
-    }
-    prev-p = p
-  }
-  return lines
-}
 
 /* Plot a line chart */
 #let plot(data,
           multi: false,
 
           /* Tics Dictionary
-	   * - every: number   Draw tic every n values
-	   * - tics: array     Place tic at values
-	   * - mirror: bool    Mirror tics to opposite side
-	   * - side: string    Side (left, right, top, bottom)
-	   * - length: length  Line length
-	   * - offset: length  Offset (outset) 
-	   * - angle: length   Label rotation
-	   * - stroke: stroke  Tic stroke
-	   */
+	         * - every: number   Draw tic every n values
+	         * - tics: array     Place tic at values
+	         * - mirror: bool    Mirror tics to opposite side
+	         * - side: string    Side (left, right, top, bottom)
+	         * - length: length  Line length
+	         * - offset: length  Offset (outset) 
+	         * - angle: length   Label rotation
+	         * - stroke: stroke  Tic stroke
+	         */
           x-tics: (every: 1),
           y-tics: (every: 1),
           x2-tics: none,
           y2-tics: none,
           
           /* Axis Dictionary
-	   * - range: array|none  Range to plot `(min, max)`
-	   */
+	         * - range: array|none  Range to plot `(min, max)`
+	         */
           x-axis: (:),
           y-axis: (:),
           x2-axis: (:),
           y2-axis: (:),
+
+          /* Labels */
+          x-label:  [$x$],
+          x2-label: [],
+          y-label:  [$y$],
+          y2-label: [],
           
           width: 10cm,
           height: 10cm,
           border-stroke: black + .5pt,
 
           /* Padding */
-          padding: (left: 2.4em, right: 2.4em, top: 1.4em, bottom: 1.4em),
+          padding: (left: 2.4em, right: 2.4em, top: 1.4em, bottom: 1.6em),
   ) = {
   style(st => {
     /* Plot viewport size */
@@ -136,19 +59,22 @@
     let data-x = padding.left
     let data-y = padding.top
 
+    let frame = (x: 0cm, y: 0cm, width: width, height: height)
+    let data-frame = rect-inset(frame, padding)
+
     /* Relative axis coordinates */
     let left-axis-x = 0cm
-    let right-axis-x = data-width
+    let right-axis-x = data-frame.width
     let top-axis-y = 0cm
-    let bottom-axis-y = data-height
+    let bottom-axis-y = data-frame.height
 
     // Translate data point pt to relative plot coordinates
     let point-to-plot(pt, x-range, y-range) = {
-      let x-scale = data-width / (x-range.at(1) - x-range.at(0))
-      let y-scale = data-height / (y-range.at(1) - y-range.at(0))
+      let x-scale = data-frame.width / (x-range.at(1) - x-range.at(0))
+      let y-scale = data-frame.height / (y-range.at(1) - y-range.at(0))
     
       return (x-scale * (pt.at(0) - x-range.at(0)),
-              data-height - y-scale * (pt.at(1) - y-range.at(0)))
+              data-frame.height - y-scale * (pt.at(1) - y-range.at(0)))
     }
 
     /* All axes */
@@ -232,16 +158,16 @@
 
       let offset = p-dict-get(tics, "offset", 0cm)    
       if side == "left" {
-        pt = (left-axis-x - offset, data-height - length-on-range(range, data-height, value))
+        pt = (left-axis-x - offset, data-frame.height - length-on-range(range, data-frame.height, value))
         angle = 0deg
       } else if side == "right" {
-        pt = (right-axis-x + offset, data-height - length-on-range(range, data-height, value))
+        pt = (right-axis-x + offset, data-frame.height - length-on-range(range, data-frame.height, value))
         angle = 180deg
       } else if side == "bottom" {
-        pt = (length-on-range(range, data-width, value), bottom-axis-y + offset)
+        pt = (length-on-range(range, data-frame.width, value), bottom-axis-y + offset)
         angle = 270deg
       } else if side == "top" {
-        pt = (length-on-range(range, data-width, value), top-axis-y - offset)
+        pt = (length-on-range(range, data-frame.width, value), top-axis-y - offset)
         angle = 90deg
       }
 
@@ -249,8 +175,8 @@
     }
 
     let render-tic-mark(axis, tics, pt, angle) = {
-      place(dx: data-x,
-            dy: data-y, {
+      place(dx: data-frame.x,
+            dy: data-frame.y, {
     	    line(start: pt, angle: angle,
     	         length: p-dict-get(tics, "lengts", plot-defaults.tic-length),
     		 stroke: p-dict-get(tics, "stroke", plot-defaults.tic-stroke))
@@ -258,16 +184,13 @@
     }
 
     let render-tic-label(tics, pt, value, side) = {
-      let format = p-dict-get(tics, "format", none)
-      if format == none {
-        format = (v => str(int(v*100)/100.0))
-      }
-
       if type(value) == "array" {
         value = value.at(1)
+      } else {
+        value = p-tic-get-label(tics, value)
       }
 
-      let label = rotate(origin: center + horizon, p-dict-get(tics, "angle", 0deg))[ #format(value) ]
+      let label = rotate(origin: center + horizon, p-dict-get(tics, "angle", 0deg), [#value])
       let bounds = measure(label, st)
 
       let offset = (0cm, 0cm)
@@ -276,8 +199,8 @@
       if side == "top" { offset = (-bounds.width / 2, -bounds.height - .5em) }
       if side == "bottom" { offset = (-bounds.width / 2, .5em) }
 
-      place(dx: pt.at(0) + offset.at(0) + data-x,
-            dy: pt.at(1) + offset.at(1) + data-y, label)
+      place(dx: pt.at(0) + offset.at(0) + data-frame.x,
+            dy: pt.at(1) + offset.at(1) + data-frame.y, label)
     }
 
     let render-tics(axis, tics, side, mirror: false) = {
@@ -316,7 +239,7 @@
       }
     }
 
-    block(width: width, height: height, {
+    let content = block(width: width, height: height, {
       /* Plot point array */
       let plot-data(data, n) = {
         let colors = (black, red, blue, green)
@@ -335,7 +258,7 @@
         for l in lines-for-points(data.data, x-range, y-range) {
           let a = point-to-plot(l.at(0), x-range, y-range)
           let b = point-to-plot(l.at(1), x-range, y-range)
-          place(dx: data-x, dy: data-y)[ #plot-line-segment(a, b) ]
+          place(dx: data-frame.x, dy: data-frame.y)[ #plot-line-segment(a, b) ]
         }
       }
 
@@ -368,17 +291,21 @@
         }
       }
 
-      /* Render axis labels */
-      for name, axis in axes {
-        let label = p-dict-get(axis, "label", none)
-        if label != none {
-          // TODO: Render label
-        }
-      }
-
       /* Render border */
-      place(dx: data-x,
-            dy: data-y, { rect(width: data-width, height: data-height, stroke: border-stroke) })
+      place(dx: data-frame.x,
+            dy: data-frame.y, {
+        rect(width: data-frame.width, height: data-frame.height,
+             stroke: border-stroke) })
     })
+
+    grid(columns: (auto, auto, auto), rows: (auto, auto, auto), gutter: 1pt,
+      /* Row 1 */
+      [], align(center, x2-label), [],
+      /* Row 2 */
+      align(center + horizon, rotate(y-label, -90deg)),
+      content,
+      align(center + horizon, rotate(y2-label, - 90deg)),
+      /* Row 3 */
+      [], align(center, x-label), [])
   })
 }

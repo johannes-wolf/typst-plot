@@ -5,5 +5,5 @@
 
 #plot(plot-data(plot-fn(x => calc.sin(x), min: 0, max: 2*calc.pi, steps: 50)),
       y-axis: (range: (-1, 1)),
-      width: 100%,
-      height: 100%)
+      width: 8cm,
+      height: 4.5cm)

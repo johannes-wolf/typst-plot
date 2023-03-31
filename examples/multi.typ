@@ -6,7 +6,8 @@
 #plot((plot-data(plot-fn(min: 0, max: 2*calc.pi, steps: 40, { x => calc.sin(x) }), x-axis: "x"), 
        plot-data(plot-fn(min: 0, max: 2*calc.pi, steps: 40, { x => calc.cos(x) }), x-axis: "x2")), 
   multi:true,
-  width: 100%, height: 100%, 
+  width: 8cm,
+  height: 4.5cm, 
 
   x-axis: (range: (-1, calc.pi * 2 + 1)),
   x-tics: (stroke: black, every: calc.pi, tics: (calc.pi/2,),
