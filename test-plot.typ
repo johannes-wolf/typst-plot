@@ -10,16 +10,15 @@
 }
 
 #figure(caption: [Simple plot])[
-  #plot(plot-data(plot-fn(min: -2, max: 2, x => { return calc.pow(x, 3) })),
-    y-tics: (every: 8),
+  #plot(plot-data(plot-fn(min: -10, max: 10, x => { return calc.pow(x, 3) }), stroke: 1cm),
+    y-tics: (every: 250, format: "sci"),
     width: 10cm,
-    height: 3cm)
+    height: 10cm)
   ]
 
 #figure(caption: [Multiple Axes])[
-  #plot((plot-data(plot-fn(min: 0, max: 2*calc.pi, steps: 40, { x => calc.sin(x) }), x-axis: "x"), 
-         plot-data(plot-fn(min: 0, max: 2*calc.pi, steps: 40, { x => calc.cos(x) }), x-axis: "x2")), 
-         multi:true,
+  #plot(plot-data(plot-fn(min: 0, max: 2*calc.pi, steps: 40, { x => calc.sin(x) }), x-axis: "x"), 
+         plot-data(plot-fn(min: 0, max: 2*calc.pi, steps: 40, { x => calc.cos(x) }), x-axis: "x2"), 
     width: 10cm, height: 5cm, 
 
     x-axis: (range: (-1, calc.pi * 2 + 1)),
@@ -33,3 +32,4 @@
     x2-axis: (range: (0, calc.pi * 2 )),
     x2-tics: (stroke: red + .5pt, every: 1.5, mirror: false),)
 ]
+

@@ -112,6 +112,20 @@
 }
 
 /**
+ * Parse plot data to float
+ */
+#let parse-data(data) = {
+  if type(data) == "string" {
+    return float(data.trim())
+
+    // TODO: Support other types (date, time, ...)
+    panic("Could not parse value " + repr(data))
+  }
+
+  return float(data)
+}
+
+/**
  * Returns interpolated endpoints of line
  * between `points` inside `x-range` and `y-range` or none
  *
@@ -181,6 +195,7 @@
   let lines = ()
   let prev-p = none
   for p in points {
+    p = p.map(parse-data)
     if prev-p != none {
       let a = lin-interpolated-point(prev-p, prev-p, p)
       let b = lin-interpolated-point(p, prev-p, p)

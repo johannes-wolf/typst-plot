@@ -3,7 +3,7 @@ set -eu
 
 for f in *.typ; do
     echo "Building $f"
-    typst "$f" && convert \
+    typst compile "$f" && convert \
 		      -density 150 \
 		      "${f//.typ/.pdf}" \
 		      "${f//.typ/.png}"

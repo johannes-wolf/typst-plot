@@ -13,10 +13,7 @@
 )
 
 /* Plot a line chart */
-#let plot(data,
-          multi: false,
-
-          /* Tics Dictionary
+#let plot(/* Tics Dictionary
 	         * - every: number   Draw tic every n values
 	         * - tics: array     Place tic at values
 	         * - mirror: bool    Mirror tics to opposite side
@@ -51,6 +48,8 @@
 
           /* Padding */
           padding: (left: 2.4em, right: 2.4em, top: 1.4em, bottom: 1.6em),
+
+          ..data,
   ) = {
   style(st => {
     /* Plot viewport size */
@@ -115,6 +114,7 @@
         let min-y = none; let max-y = none
 
         for pt in d.data {
+          pt = pt.map(parse-data)
           if min-x == none or min-x > pt.at(0) { min-x = pt.at(0) }
           if max-x == none or max-x < pt.at(0) { max-x = pt.at(0) }
           if min-y == none or min-y > pt.at(1) { min-y = pt.at(1) }
@@ -130,16 +130,10 @@
       return (x: x-axis.range, y: y-axis.range)
     }
     
-    if multi {
-      for sub-data in data {
-        let ranges = autorange-axes(sub-data)
-        axes.at(sub-data.x-axis).range = ranges.x
-        axes.at(sub-data.y-axis).range = ranges.y
-      }
-    } else {
-      let ranges = autorange-axes(data)
-      axes.at(data.x-axis).range = ranges.x
-      axes.at(data.y-axis).range = ranges.y
+    for sub-data in data.pos() {
+      let ranges = autorange-axes(sub-data)
+      axes.at(sub-data.x-axis).range = ranges.x
+      axes.at(sub-data.y-axis).range = ranges.y
     }
 
     // Returns a length on `range` scaled to `size`
@@ -258,20 +252,20 @@
         for l in lines-for-points(data.data, x-range, y-range) {
           let a = point-to-plot(l.at(0), x-range, y-range)
           let b = point-to-plot(l.at(1), x-range, y-range)
-          place(dx: data-frame.x, dy: data-frame.y)[ #plot-line-segment(a, b) ]
+          place(dx: 0cm, dy: 0cm)[ #plot-line-segment(a, b) ]
         }
       }
 
       /* Plot graph(s) */
-      if multi {
-        let n = 0
-        for d in data {
-          plot-data(d, n)
-          n += 1
-        }
-      } else {
-        plot-data(data, 0)
-      }
+      place(dx: data-frame.x, dy: data-frame.y, {
+        block(width: data-frame.width, height: data-frame.height, clip: true, {
+          let n = 0
+          for d in data.pos() {
+            plot-data(d, n)
+            n += 1
+          }
+        })
+      })
 
       /* Render tics */
       for name, tic in tics {
@@ -295,7 +289,8 @@
       place(dx: data-frame.x,
             dy: data-frame.y, {
         rect(width: data-frame.width, height: data-frame.height,
-             stroke: border-stroke) })
+             stroke: border-stroke)
+      })
     })
 
     grid(columns: (auto, auto, auto), rows: (auto, auto, auto), gutter: 1pt,
