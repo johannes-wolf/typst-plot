@@ -41,6 +41,17 @@
 }
 
 /**
+ * Rotate content and affect layout.
+ * https://github.com/typst/typst/issues/528 by @Enivex
+ */
+#let rotate-bbox(body, angle) = style(styles => {
+  let size = measure(body,styles)
+  box(inset: (x: -size.width/2+(size.width*calc.abs(calc.cos(angle))+size.height*calc.abs(calc.sin(angle)))/2,
+              y: -size.height/2+(size.height*calc.abs(calc.cos(angle))+size.width*calc.abs(calc.sin(angle)))/2),
+      rotate(body, angle))
+})
+
+/**
  * private: Format scientific notation
  * @param factor   number Factor
  * @param exponent number Exponent

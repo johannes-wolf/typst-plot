@@ -297,9 +297,9 @@
       /* Row 1 */
       [], align(center, x2-label), [],
       /* Row 2 */
-      align(center + horizon, rotate(y-label, -90deg)),
+      align(center + horizon, rotate-bbox(y-label, -90deg)),
       content,
-      align(center + horizon, rotate(y2-label, - 90deg)),
+      align(center + horizon, rotate-bbox(y2-label, -90deg)),
       /* Row 3 */
       [], align(center, x-label), [])
   })
