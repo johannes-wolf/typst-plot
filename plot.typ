@@ -1,4 +1,20 @@
 #import "plot-util.typ": *
+#import "plot-mark.typ": *
+#import "plot-line.typ"
+
+/* Plot color array */
+#let plot-colors = (
+  black, red, blue, green, yellow,
+)
+
+/* Returns the stroke color if set, or the nth default color */
+#let get-plot-color(data, n) = {
+  if "stroke" in data and data.stroke != auto {
+    return data.stroke
+  }
+
+  return plot-colors.at(calc.mod(n, plot-colors.len()))
+}
 
 /* Default settings */
 #let plot-defaults = (
@@ -8,8 +24,11 @@
 )
 
 /* Data settings */
-#let plot-data(data, x-axis: "x", y-axis: "y", label: "data", stroke: "auto") = (
-  data: data, stroke: stroke, x-axis: x-axis, y-axis: y-axis
+#let plot-data(data, x-axis: "x", y-axis: "y", label: "data", stroke: auto, mark: none, mark-stroke: auto, mark-fill: auto) = (
+  data: data, stroke: stroke, x-axis: x-axis, y-axis: y-axis,
+  mark: mark, // string or function
+  mark-fill: mark-fill,
+  mark-stroke: mark-stroke,
 )
 
 /* Plot a line chart */
@@ -29,7 +48,7 @@
           y2-tics: none,
           
           /* Axis Dictionary
-	         * - range: array|none  Range to plot `(min, max)`
+	         * - range: array|auto  Range to plot `(min, max)`
 	         */
           x-axis: (:),
           y-axis: (:),
@@ -59,22 +78,8 @@
     let data-y = padding.top
 
     let frame = (x: 0cm, y: 0cm, width: width, height: height)
-    let data-frame = rect-inset(frame, padding)
-
-    /* Relative axis coordinates */
-    let left-axis-x = 0cm
-    let right-axis-x = data-frame.width
-    let top-axis-y = 0cm
-    let bottom-axis-y = data-frame.height
-
-    // Translate data point pt to relative plot coordinates
-    let point-to-plot(pt, x-range, y-range) = {
-      let x-scale = data-frame.width / (x-range.at(1) - x-range.at(0))
-      let y-scale = data-frame.height / (y-range.at(1) - y-range.at(0))
-    
-      return (x-scale * (pt.at(0) - x-range.at(0)),
-              data-frame.height - y-scale * (pt.at(1) - y-range.at(0)))
-    }
+    let axis-frame = rect-inset(frame, padding)  // Padding between frame and axis
+    let data-frame = rect-inset(axis-frame, 0cm) // Padding between axis and data
 
     /* All axes */
     let axes = (
@@ -107,9 +112,9 @@
       let x-axis = axes.at(d.x-axis)
       let y-axis = axes.at(d.y-axis)
 
-      let x-range = p-dict-get(x-axis, "range", none)
-      let y-range = p-dict-get(y-axis, "range", none)
-      if x-range == none or y-range == none {
+      let x-range = p-dict-get(x-axis, "range", auto)
+      let y-range = p-dict-get(y-axis, "range", auto)
+      if x-range == auto or y-range == auto {
         let min-x = none; let max-x = none
         let min-y = none; let max-y = none
 
@@ -121,8 +126,8 @@
           if max-y == none or max-y < pt.at(1) { max-y = pt.at(1) }
         }
 
-        if x-range == none { x-range = (min-x, max-x) }
-        if y-range == none { y-range = (min-y, max-y) }
+        if x-range == auto { x-range = (min-x, max-x) }
+        if y-range == auto { y-range = (min-y, max-y) }
 
         return (x: x-range, y: y-range)
       }
@@ -138,7 +143,7 @@
 
     // Returns a length on `range` scaled to `size`
     let length-on-range(range, size, value) = {
-      let scale = size / (range.at(1) - range.at(0))
+      let scale = 100% / (range.at(1) - range.at(0))
       return (value - range.at(0)) * scale
     }
 
@@ -152,16 +157,16 @@
 
       let offset = p-dict-get(tics, "offset", 0cm)    
       if side == "left" {
-        pt = (left-axis-x - offset, data-frame.height - length-on-range(range, data-frame.height, value))
+        pt = (0% - offset, 100% - length-on-range(range, data-frame.height, value))
         angle = 0deg
       } else if side == "right" {
-        pt = (right-axis-x + offset, data-frame.height - length-on-range(range, data-frame.height, value))
+        pt = (100% + offset, 100% - length-on-range(range, data-frame.height, value))
         angle = 180deg
       } else if side == "bottom" {
-        pt = (length-on-range(range, data-frame.width, value), bottom-axis-y + offset)
+        pt = (length-on-range(range, data-frame.width, value), 100% + offset)
         angle = 270deg
       } else if side == "top" {
-        pt = (length-on-range(range, data-frame.width, value), top-axis-y - offset)
+        pt = (length-on-range(range, data-frame.width, value), 0% - offset)
         angle = 90deg
       }
 
@@ -169,8 +174,7 @@
     }
 
     let render-tic-mark(axis, tics, pt, angle) = {
-      place(dx: data-frame.x,
-            dy: data-frame.y, {
+      place(dx: 0cm, dy: 0cm, {
     	    line(start: pt, angle: angle,
     	         length: p-dict-get(tics, "lengts", plot-defaults.tic-length),
     		 stroke: p-dict-get(tics, "stroke", plot-defaults.tic-stroke))
@@ -193,8 +197,8 @@
       if side == "top" { offset = (-bounds.width / 2, -bounds.height - .5em) }
       if side == "bottom" { offset = (-bounds.width / 2, .5em) }
 
-      place(dx: pt.at(0) + offset.at(0) + data-frame.x,
-            dy: pt.at(1) + offset.at(1) + data-frame.y, label)
+      place(dx: pt.at(0) + offset.at(0),
+            dy: pt.at(1) + offset.at(1), label)
     }
 
     let render-tics(axis, tics, side, mirror: false) = {
@@ -233,63 +237,129 @@
       }
     }
 
-    let content = block(width: width, height: height, {
+    let content = box(width: width, height: height, {
       /* Plot point array */
-      let plot-data(data, n) = {
-        let colors = (black, red, blue, green)
-        
-        let stroke = p-dict-get(data, "stroke", "auto")
-        if stroke == "auto" {
-          stroke = colors.at(calc.mod(n, colors.len())) + .5pt
-        }
-        
-        let plot-line-segment(a, b) = {
-          line(start: a, end: b, stroke: stroke)
-        }
-        
+      let stroke-data(data, stroke, n) = {
         let x-range = axes.at(data.x-axis).range
         let y-range = axes.at(data.y-axis).range
-        for l in lines-for-points(data.data, x-range, y-range) {
-          let a = point-to-plot(l.at(0), x-range, y-range)
-          let b = point-to-plot(l.at(1), x-range, y-range)
-          place(dx: 0cm, dy: 0cm)[ #plot-line-segment(a, b) ]
+        let x-delta = x-range.at(1) - x-range.at(0)
+        let y-delta = y-range.at(1) - y-range.at(0)
+        let x-off = x-range.at(0)
+        let y-off = y-range.at(0)
+
+        plot-line.render(data.data.map(pt => {
+          return ((pt.at(0) - x-off) / x-delta,
+                  (pt.at(1) - y-off) / y-delta)
+        }), stroke)
+      }
+
+      let mark-data(data, mark, n) = {
+        let mark-size = p-dict-get(data, "mark-size", .5em)
+        let mark-stroke = p-dict-get(data, "mark-stroke", auto)
+        if mark-stroke == auto {
+          mark-stroke = get-plot-color(data, n) + .5pt
+        }
+
+        let mark-fill = p-dict-get(data, "mark-fill", auto)
+        if mark-fill == auto {
+          mark-fill = get-plot-color(data, n)
+        }
+
+        let x-range = axes.at(data.x-axis).range
+        let y-range = axes.at(data.y-axis).range
+        let x-off = x-range.at(0)
+        let y-off = y-range.at(0)
+
+        for p in data.data {
+          let delta-x = x-range.at(1) - x-range.at(0)
+          let delta-y = y-range.at(1) - y-range.at(0)
+
+          let x = (p.at(0) - x-off) / delta-x * 100%
+          let y = 100% - (p.at(1) - y-off) / delta-y * 100%
+
+          /* Skip out of range points */
+          if x < 0% or x > 100% or y < 0% or y > 100% { continue }
+
+          place(dx: x - mark-size/2,
+                dy: y - mark-size/2,
+                box(width: mark-size, height: mark-size, {
+                  plot-mark(mark, stroke: mark-stroke, fill: mark-fill)
+                }))
         }
       }
 
-      /* Plot graph(s) */
-      place(dx: data-frame.x, dy: data-frame.y, {
-        block(width: data-frame.width, height: data-frame.height, clip: true, {
-          let n = 0
-          for d in data.pos() {
-            plot-data(d, n)
-            n += 1
+      /* Render axes */
+      place(dx: axis-frame.x, dy: axis-frame.y, {
+        box(width: axis-frame.width, height: axis-frame.height, {
+          /* Render tics */
+          for name, tic in tics {
+            if tic != none {
+              let side = p-dict-get(tic, "side", none)
+              if side == none {
+                side = tic-side.at(name)
+              }
+
+              let tics-frame = none
+              if side == "left" or side == "right" {
+                tics-frame = (
+                  x: 0%,
+                  y: data-frame.y - axis-frame.y,
+                  width: 100%,
+                  height: data-frame.height
+                )
+              } else {
+                tics-frame = (
+                  x: data-frame.x - axis-frame.x,
+                  y: 0%,
+                  width: data-frame.width,
+                  height: 100%
+                )
+              }
+
+              place(dx: tics-frame.x, dy: tics-frame.y,
+                box(width: tics-frame.width, height: tics-frame.height, {
+                  let axis = axes.at(name)
+                  render-tics(axis, tic, side, mirror: false)
+
+                  if p-dict-get(tic, "mirror", plot-defaults.tic-mirror) {
+                    side = other-side.at(side)
+                    render-tics(axis, tic, side, mirror: true)
+                  }
+                })
+              )
+            }
           }
+
+          /* Render border */
+          place(dx: 0cm, dy: 0cm, {
+            rect(width: axis-frame.width, height: axis-frame.height,
+                 stroke: border-stroke)
+          })
         })
       })
 
-      /* Render tics */
-      for name, tic in tics {
-        if tic != none {
-          let side = p-dict-get(tic, "side", none)
-          if side == none {
-            side = tic-side.at(name)
-          }
-    
-          let axis = axes.at(name)
-          render-tics(axis, tic, side, mirror: false)
+      /* Plot graph(s) */
+      place(dx: data-frame.x, dy: data-frame.y, {
+        box(width: data-frame.width, height: data-frame.height, clip: false, {
+          let n = 0
+          for d in data.pos() {
+            let stroke = p-dict-get(d, "stroke", auto)
+            if stroke == auto {
+              stroke = get-plot-color(d, n) + .5pt
+            }
 
-          if p-dict-get(tic, "mirror", plot-defaults.tic-mirror) {
-            side = other-side.at(side)
-            render-tics(axis, tic, side, mirror: true)
-          }
-        }
-      }
+            if stroke != none {
+              stroke-data(d, stroke, n)
+            }
 
-      /* Render border */
-      place(dx: data-frame.x,
-            dy: data-frame.y, {
-        rect(width: data-frame.width, height: data-frame.height,
-             stroke: border-stroke)
+            let mark = p-dict-get(d, "mark", none)
+            if mark != none {
+              mark-data(d, mark, n)
+            }
+
+            n += 1
+          }
+        })
       })
     })
 
