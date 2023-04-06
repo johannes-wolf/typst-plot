@@ -53,6 +53,13 @@
     } else {
       if in-range(prev-p) {
         path.push(lin-interpolated-pt(prev-p, p))
+      } else if prev-p != none {
+        let a = lin-interpolated-pt(p, prev-p)
+        let b = lin-interpolated-pt(prev-p, p)
+        if in-range(a) and in-range(b) {
+          path.push(a)
+          path.push(b)
+        }
       }
 
       if path.len() > 0 {
