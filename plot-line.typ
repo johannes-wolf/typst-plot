@@ -25,26 +25,16 @@
     }
 
     let m = (y2 - y1) / (x2 - x1)
-    let n = y1 - m * x1
+    let n = y2 - m * x2
 
-    let x = if m > 0 { x2 } else { x1 }
-    let y = if m > 0 { y2 } else { y1 }
+    let x = x2
+    let y = y2
 
-    if y > 1 {
-      x = (1 - n) / m
-      y = 1
-    } else if y < 0 {
-      x = x + (0 - n) / m
-      y = 0
-    }
+    y = calc.min(1, calc.max(y, 0))
+    x = (y - n) / m
 
-    if x > 1 {
-      y = m + n
-      x = 1
-    } else if x < 0 {
-      y = 0 + n
-      x = 0
-    }
+    x = calc.min(1, calc.max(x, 0))
+    y = m * x + n
 
     return (x, y)
   }
@@ -56,16 +46,19 @@
   for p in data {
     if in-range(p) {
       if not in-range(prev-p) and prev-p != none {
-        path.push(lin-interpolated-pt(prev-p, p))
+        path.push(lin-interpolated-pt(p, prev-p))
       }
 
       path.push(p)
     } else {
-      if path.len() > 0 {
+      if in-range(prev-p) {
         path.push(lin-interpolated-pt(prev-p, p))
-        paths.push(path)
       }
-      path = ()
+
+      if path.len() > 0 {
+        paths.push(path)
+        path = ()
+      }
     }
 
     prev-p = p
