@@ -10,14 +10,19 @@
   }
 
   let lin-interpolated-pt(a, b) = {
-    let lin-interp(a, b, t) = {
-      return a * (1 - t) + b * t
+    let x1 = a.at(0)
+    let y1 = a.at(1)
+    let x2 = b.at(0)
+    let y2 = b.at(1)
+
+    /* Special case for vertical lines */
+    if x2 - x1 == 0 {
+      return (x2, calc.min(1, calc.max(y2, 0)))
     }
 
-    let x1 = a.at(0)
-    let x2 = b.at(0)
-    let y1 = a.at(1)
-    let y2 = b.at(1)
+    if y2 - y1 == 0 {
+      return (calc.min(1, calc.max(x2, 0)), y2)
+    }
 
     let m = (y2 - y1) / (x2 - x1)
     let n = y1 - m * x1

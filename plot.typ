@@ -135,10 +135,12 @@
 
         if x-range == auto {
           let x-offset = (max-x - min-x) / 10
+          if max-x - min-x == 0 { min-x = -.1; max-x = .1 }
           x-range = (min-x - x-offset, max-x + x-offset)
         }
         if y-range == auto {
           let y-offset = (max-y - min-y) / 10
+          if max-y - min-y == 0 { min-y = -.1; max-y = .1 }
           y-range = (min-y - y-offset, max-y + y-offset)
         }
 
@@ -156,7 +158,10 @@
 
     // Returns a length on `range` scaled to `size`
     let length-on-range(range, size, value) = {
-      let scale = 100% / (range.at(1) - range.at(0))
+      let delta = range.at(1) - range.at(0)
+      if delta == 0 { delta = 1 } /* FIXME: Is this needed? */
+
+      let scale = 100% / delta
       return (value - range.at(0)) * scale
     }
 
@@ -260,10 +265,15 @@
         let x-off = x-range.at(0)
         let y-off = y-range.at(0)
 
-        plot-line.render(data.data.map(pt => {
+        if x-delta == 0 { x-delta = 1 }
+        if y-delta == 0 { y-delta = 1 }
+
+        let norm-data = data.data.map(pt => {
           return ((pt.at(0) - x-off) / x-delta,
                   (pt.at(1) - y-off) / y-delta)
-        }), stroke)
+        })
+
+        plot-line.render(norm-data, stroke)
       }
 
       let mark-data(data, mark, n) = {
