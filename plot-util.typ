@@ -96,19 +96,6 @@
 } 
 
 /**
- * private: Get tic label content
- * @param tic   dict  Tic dictionary
- * @param value any   Tic value
- * @return content 
- */ 
-#let p-tic-get-label(tic, value) = {
-  if "format" in tic {
-    return p-format-number(value, format: tic.format)
-  }
-  return value
-}
-
-/**
  * private: Get dictionary value or return fallback
  * @param d dictionary  Dictionary
  * @param key string    Key

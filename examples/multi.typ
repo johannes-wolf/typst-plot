@@ -1,6 +1,6 @@
 #import "../plot.typ": plot, plot-data
 
-#set page(width: 10cm, height: 7cm)
+#set page(width: 12cm, height: 10cm)
 
 #let data-temperature = (
   (0, 2 ), (1, 8 ), (2, 7 ), (3, 5 ), (4, 6 ), (5, 7 ),
@@ -18,7 +18,7 @@
 )
 
 #plot(width: 8cm,
-      height: 4.5cm, 
+      height: 6cm, 
       x-tics: (every: 2),
       x-label: [Time in hours],
       y-tics: (every: 2, mirror: false),

@@ -1,5 +1,6 @@
 #import "plot-util.typ": *
 #import "plot-mark.typ": *
+#import "plot-tics.typ"
 #import "plot-line.typ"
 
 /* Plot color array */
@@ -66,7 +67,7 @@
           border-stroke: black + .5pt,
 
           /* Padding */
-          padding: (left: 2.4em, right: 2.4em, top: 1.4em, bottom: 1.6em),
+          padding: (left: 0em, right: 0em, top: 0em, bottom: 0em),
 
           ..data,
   ) = {
@@ -78,12 +79,6 @@
   })
 
   style(st => {
-    /* Plot viewport size */
-    let data-width = width - padding.left - padding.right
-    let data-height = height - padding.top - padding.bottom
-    let data-x = padding.left
-    let data-y = padding.top
-
     let frame = (x: 0cm, y: 0cm, width: width, height: height)
     let axis-frame = rect-inset(frame, padding)  // Padding between frame and axis
     let data-frame = rect-inset(axis-frame, 0cm) // Padding between axis and data
@@ -165,6 +160,14 @@
       return (value - range.at(0)) * scale
     }
 
+    let normalized-tics = (x: none, y: none, x2: none, y2: none)
+    for name, t in tics {
+      if t != none {
+        normalized-tics.at(name) = plot-tics.tic-list(
+          axes.at(name), tics.at(name), data-frame.height)
+      }
+    }
+
     let tic-position(axis, tics, value, side) = {
       let pt = none
       let angle = 0deg
@@ -195,45 +198,21 @@
       place(dx: 0cm, dy: 0cm, {
     	    line(start: pt, angle: angle,
     	         length: p-dict-get(tics, "lengts", plot-defaults.tic-length),
-    		 stroke: p-dict-get(tics, "stroke", plot-defaults.tic-stroke))
+               stroke: p-dict-get(tics, "stroke", plot-defaults.tic-stroke))
     	  })
-    }
-
-    let render-tic-label(tics, pt, value, side) = {
-      if type(value) == "array" {
-        value = value.at(1)
-      } else {
-        value = p-tic-get-label(tics, value)
-      }
-
-      let label = rotate(origin: center + horizon, p-dict-get(tics, "angle", 0deg), [#value])
-      let bounds = measure(label, st)
-
-      let offset = (0cm, 0cm)
-      if side == "left" { offset = (-.5em - bounds.width, -bounds.height / 2) }
-      if side == "right" { offset = (.5em, -bounds.height / 2) }
-      if side == "top" { offset = (-bounds.width / 2, -bounds.height - .5em) }
-      if side == "bottom" { offset = (-bounds.width / 2, .5em) }
-
-      place(dx: pt.at(0) + offset.at(0),
-            dy: pt.at(1) + offset.at(1), label)
     }
 
     let render-tics(axis, tics, side, mirror: false) = {
       /* Render calculated ticks */
       let every = p-dict-get(tics, "every", 1)
       if every != 0 {
-        let scale = 1 / every
+        let scale = 1 / every // TODO: Use normalized-tics ...
         for t in range(int(axis.range.at(0) * scale), int(axis.range.at(1) * scale + 1.5)) {
           let v = t / scale
           let pos = tic-position(axis, tics, v, side)
           if pos == none { continue }
           
           render-tic-mark(axis, tics, pos.position, pos.angle)
-
-          if not mirror {
-            render-tic-label(tics, pos.position, v, side)
-          }
         }
       }
 
@@ -248,10 +227,6 @@
         
         let pos = tic-position(axis, tics, value, side)
         render-tic-mark(axis, tics, pos.position, pos.angle)
-
-        if not mirror {
-          render-tic-label(tics, pos.position, label, side)
-        }
       }
     }
 
@@ -386,14 +361,34 @@
       })
     })
 
-    grid(columns: (auto, auto, auto), rows: (auto, auto, auto), gutter: 1pt,
-      /* Row 1 */
-      [], align(center, x2-label), [],
-      /* Row 2 */
+    let x-tic-labels  = plot-tics.render-labels(normalized-tics.x, top, data-frame.width)
+    let x2-tic-labels = plot-tics.render-labels(normalized-tics.x2, top, data-frame.width)
+    let y-tic-labels  = plot-tics.render-labels(normalized-tics.y, right, data-frame.height)
+    let y2-tic-labels = plot-tics.render-labels(normalized-tics.y2, left, data-frame.height)
+
+    grid(columns: (auto, auto, auto, auto, auto),
+         rows: (auto, auto, auto, auto, auto),
+         gutter: .5em,
+      /* X2 Label */
+      [], [], align(center, x2-label), [], [],
+
+      /* X2 Tics */
+      [], [], x2-tic-labels, [], [],
+
+      /* Y Label */
       align(center + horizon, rotate-bbox(y-label, -90deg)),
+
+      y-tic-labels,
       content,
+      y2-tic-labels,
+
+      /* Y2 Label */
       align(center + horizon, rotate-bbox(y2-label, -90deg)),
-      /* Row 3 */
-      [], align(center, x-label), [])
+
+      /* X Tics */
+      [], [], x-tic-labels, [], [],
+
+      /* X Label */
+      [], [], align(center, x-label), [], [])
   })
 }
