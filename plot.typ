@@ -133,8 +133,14 @@
           if max-y == none or max-y < pt.at(1) { max-y = pt.at(1) }
         }
 
-        if x-range == auto { x-range = (min-x, max-x) }
-        if y-range == auto { y-range = (min-y, max-y) }
+        if x-range == auto {
+          let x-offset = (max-x - min-x) / 10
+          x-range = (min-x - x-offset, max-x + x-offset)
+        }
+        if y-range == auto {
+          let y-offset = (max-y - min-y) / 10
+          y-range = (min-y - y-offset, max-y + y-offset)
+        }
 
         return (x: x-range, y: y-range)
       }
