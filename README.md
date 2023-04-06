@@ -13,3 +13,5 @@ A simple [Typst](https://typst.app) library for plotting line charts.
 ## Examples
 ![Simple](examples/simple.png)
 ![Multiple Axes](examples/multi.png)
+![Tic labels](examples/tic-label.png)
+![Parametric plot](examples/parametric.png)
