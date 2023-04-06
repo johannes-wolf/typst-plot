@@ -5,9 +5,9 @@ A simple [Typst](https://typst.app) library for plotting line charts.
 
 ```typst
 #import "plot.ty": plot, plot-data
+#import "plot-sample.typ": *
 
-#let my-data = (...)
-#plot(plot-data(my-data))
+#plot(sample(x => calc.sin(x), min: 0, max: 2 * calc.pi))
 ```
 
 ## Examples

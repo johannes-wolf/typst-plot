@@ -70,6 +70,13 @@
 
           ..data,
   ) = {
+  let plots = data.pos().map(v => {
+    if type(v) == "array" {
+      return plot-data(v)
+    }
+    return v
+  })
+
   style(st => {
     /* Plot viewport size */
     let data-width = width - padding.left - padding.right
@@ -135,7 +142,7 @@
       return (x: x-axis.range, y: y-axis.range)
     }
     
-    for sub-data in data.pos() {
+    for sub-data in plots {
       let ranges = autorange-axes(sub-data)
       axes.at(sub-data.x-axis).range = ranges.x
       axes.at(sub-data.y-axis).range = ranges.y
@@ -342,19 +349,19 @@
       place(dx: data-frame.x, dy: data-frame.y, {
         box(width: data-frame.width, height: data-frame.height, clip: false, {
           let n = 0
-          for d in data.pos() {
-            let stroke = p-dict-get(d, "stroke", auto)
+          for sub-plot in plots {
+            let stroke = p-dict-get(sub-plot, "stroke", auto)
             if stroke == auto {
-              stroke = get-plot-color(d, n) + .5pt
+              stroke = get-plot-color(sub-plot, n) + .5pt
             }
 
             if stroke != none {
-              stroke-data(d, stroke, n)
+              stroke-data(sub-plot, stroke, n)
             }
 
-            let mark = p-dict-get(d, "mark", none)
+            let mark = p-dict-get(sub-plot, "mark", none)
             if mark != none {
-              mark-data(d, mark, n)
+              mark-data(sub-plot, mark, n)
             }
 
             n += 1

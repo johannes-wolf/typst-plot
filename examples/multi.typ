@@ -1,4 +1,3 @@
-#import "util.typ": plot-fn
 #import "../plot.typ": plot, plot-data
 
 #set page(width: 10cm, height: 7cm)
