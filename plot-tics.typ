@@ -1,11 +1,11 @@
 #import "plot-util.typ": *
 
-/**
- * private: Get tic label content
- * @param tic   dict  Tic dictionary
- * @param value any   Tic value
- * @return content 
- */ 
+
+/// Get tick label content
+///
+/// @param tic   dictionary  Tick dictionary
+/// @param value any         Tick value
+/// @return content 
 #let plot-tic-get-label(tic, value) = {
   if "format" in tic {
     return p-format-number(value, format: tic.format)
@@ -13,6 +13,12 @@
   return [$#str(value).replace("-", sym.minus)$]
 }
 
+/// Compute list of ticks + relative position on axis
+///
+/// @param axis dictionary  Axis
+/// @param tics array       List of fixed ticks
+/// @param length length    Length of the axis
+/// @return array
 #let tic-list(axis, tics, length) = {
   let a-range = axis.range
   let a-delta = a-range.at(1) - a-range.at(0)

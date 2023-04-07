@@ -3,9 +3,10 @@
 #import "plot-tics.typ"
 #import "plot-line.typ"
 
-/* Plot color array */
-#let plot-colors = (
-  black, red, blue, green, yellow,
+#let defaults = (
+  data-x-axis: "x",
+  data-y-axis: "y",
+  colors: (blue, red, green, yellow, black),
 )
 
 /* Returns the stroke color if set, or the nth default color */
@@ -13,57 +14,40 @@
   if "stroke" in data and data.stroke != auto {
     return data.stroke
   }
-
-  return plot-colors.at(calc.mod(n, plot-colors.len()))
+  return defaults.colors.at(calc.mod(n, defaults.colors.len()))
 }
 
-/* Default settings */
-#let plot-defaults = (
-  tic-length: .4em,
-  tic-stroke: .5pt + black,
-  tic-mirror: true,
-)
-
-/* Data settings */
-#let plot-data(data, x-axis: "x", y-axis: "y", label: "data", stroke: auto, mark: none, mark-stroke: auto, mark-fill: auto) = (
-  data: data, stroke: stroke, x-axis: x-axis, y-axis: y-axis,
-  mark: mark, // string or function
-  mark-fill: mark-fill,
-  mark-stroke: mark-stroke,
-)
-
-/* Plot a line chart */
-#let plot(/* Tics Dictionary
-	         * - every: number   Draw tic every n values
-	         * - tics: array     Place tic at values
-	         * - mirror: bool    Mirror tics to opposite side
-	         * - side: string    Side (left, right, top, bottom)
-	         * - length: length  Line length
-	         * - offset: length  Offset (outset) 
-	         * - angle: length   Label rotation
-	         * - stroke: stroke  Tic stroke
-	         */
-          x-tics: (every: 1),
-          y-tics: (every: 1),
-          x2-tics: none,
-          y2-tics: none,
-          
-          /* Axis Dictionary
-	         * - range: array|auto  Range to plot `(min, max)`
-	         */
-          x-axis: (:),
+/// Plot a line chart
+///
+/// Data: Set positional to array or dictionary:
+///   - data   array   Array of data points
+///   - mark   string  Mark type (see plot-mark.typ)
+///   - x-axis string  X axis to use (x)
+///   - y-axis string  Y axis to use (y)
+///   - stroke stroke  Custom stroke
+///
+/// Tics: Set {x,y,x2,y2}-tics to dictionary:
+///   - every  number  Draw tic every n values
+///   - tics   array   Place tics at values
+///   - mirror bool    Mirror tics to opposite side
+///   - grid   bool    Draw tics as grid lines
+///   - stroke stroke  Tic stroke
+///
+/// Axis: Set {x,y,x2,y2}-axis to dictionary:
+///   - range array    Range from low to high (low, high)
+///
+#let plot(x-axis: (:),
           y-axis: (:),
           x2-axis: (:),
           y2-axis: (:),
-
           /* Labels */
           x-label:  [$x$],
           x2-label: [],
           y-label:  [$y$],
           y2-label: [],
           
-          width: 10cm,
-          height: 10cm,
+          width: 8cm,
+          height: 8cm,
           border-stroke: black + .5pt,
 
           /* Padding */
@@ -72,27 +56,27 @@
           ..data,
   ) = {
   let plots = data.pos().map(v => {
-    if type(v) == "array" {
-      return plot-data(v)
+    let r = (
+      x-axis: defaults.data-x-axis,
+      y-axis: defaults.data-y-axis,
+    )
+    if type(v) == "dictionary" {
+      r = r + v
+    } else if type(v) == "array" {
+      r.data = v
     }
-    return v
+    return r
   })
 
   style(st => {
     let frame = (x: 0cm, y: 0cm, width: width, height: height)
-    let axis-frame = rect-inset(frame, padding)  // Padding between frame and axis
-    let data-frame = rect-inset(axis-frame, 0cm) // Padding between axis and data
+    let axis-frame = rect-inset(frame, padding)
+    let data-frame = axis-frame
 
     /* All axes */
     let axes = (
       x: x-axis, x2: x2-axis,
       y: y-axis, y2: y2-axis,
-    )
-
-    /* All tics */
-    let tics = (
-      x: x-tics, x2: x2-tics,
-      y: y-tics, y2: y2-tics,
     )
 
     /* Default axis side */
@@ -111,9 +95,8 @@
      * Returns new range as tuple (x-range, y-range)
      */
     let autorange-axes(d) = {
-      let x-axis = axes.at(d.x-axis)
-      let y-axis = axes.at(d.y-axis)
-
+      let x-axis = d.x-axis
+      let y-axis = d.y-axis
       let x-range = p-dict-get(x-axis, "range", auto)
       let y-range = p-dict-get(y-axis, "range", auto)
       if x-range == auto or y-range == auto {
@@ -151,82 +134,66 @@
       axes.at(sub-data.y-axis).range = ranges.y
     }
 
-    // Returns a length on `range` scaled to `size`
-    let length-on-range(range, size, value) = {
-      let delta = range.at(1) - range.at(0)
-      if delta == 0 { delta = 1 } /* FIXME: Is this needed? */
+    /* All tics */
+    let tics = (
+      x:  (side: "bottom", angle: 270deg, tics: (), grid: false, mirror: true, every: 1),
+      y:  (side: "left",   angle:   0deg, tics: (), grid: false, mirror: true, every: 1),
+      x2: (side: "top",    angle:  90deg, tics: (), grid: false, mirror: true),
+      y2: (side: "right",  angle: 180deg, tics: (), grid: false, mirror: true),
+    )
 
-      let scale = 100% / delta
-      return (value - range.at(0)) * scale
-    }
-
-    let normalized-tics = (x: none, y: none, x2: none, y2: none)
+    /* Compute tic positions */
     for name, t in tics {
       if t != none {
-        normalized-tics.at(name) = plot-tics.tic-list(
-          axes.at(name), tics.at(name), data-frame.height)
-      }
-    }
+        let key = name + "-tics"
+        if key in data.named() {
+          tics.at(name) += data.named().at(key)
+          t = tics.at(name) // t seems to be a copy!
+        }
 
-    let tic-position(axis, tics, value, side) = {
-      let pt = none
-      let angle = 0deg
-      let range = axis.range
-      if range.at(0) > value or value > range.at(1) {
-        return none
-      }
+        let length = if (t.side == "left" or t.side == "right") {
+          axis-frame.height
+        } else {
+          axis-frame.width
+        }
 
-      let offset = p-dict-get(tics, "offset", 0cm)    
-      if side == "left" {
-        pt = (0% - offset, 100% - length-on-range(range, data-frame.height, value))
-        angle = 0deg
-      } else if side == "right" {
-        pt = (100% + offset, 100% - length-on-range(range, data-frame.height, value))
-        angle = 180deg
-      } else if side == "bottom" {
-        pt = (length-on-range(range, data-frame.width, value), 100% + offset)
-        angle = 270deg
-      } else if side == "top" {
-        pt = (length-on-range(range, data-frame.width, value), 0% - offset)
-        angle = 90deg
-      }
-
-      return (position: pt, angle: angle)
-    }
-
-    let render-tic-mark(axis, tics, pt, angle) = {
-      place(dx: 0cm, dy: 0cm, {
-    	    line(start: pt, angle: angle,
-    	         length: p-dict-get(tics, "lengts", plot-defaults.tic-length),
-               stroke: p-dict-get(tics, "stroke", plot-defaults.tic-stroke))
-    	  })
-    }
-
-    let render-tics(axis, tics, side, mirror: false) = {
-      /* Render calculated ticks */
-      let every = p-dict-get(tics, "every", 1)
-      if every != 0 {
-        let scale = 1 / every // TODO: Use normalized-tics ...
-        for t in range(int(axis.range.at(0) * scale), int(axis.range.at(1) * scale + 1.5)) {
-          let v = t / scale
-          let pos = tic-position(axis, tics, v, side)
-          if pos == none { continue }
-          
-          render-tic-mark(axis, tics, pos.position, pos.angle)
+        let axis = axes.at(name)
+        if "range" in axis {
+          tics.at(name).tics = plot-tics.tic-list(axes.at(name), t, length)
+        } else {
+          tics.at(name).tics = ()
         }
       }
+    }
 
-      /* Render fixed tics */
-      for v in p-dict-get(tics, "tics", ()) {
-        let value = v
-        let label = v
-        if type(value) == "array" {
-          value = v.at(0)
-          label = v.at(1)
+    let render-tics() = {
+      for name, t in tics {
+        for p in t.tics {
+          let render(side, angle) = {
+            let x = 0; let y = 0; let full-length = 0;
+            if side == "right" { x = 1 }
+            if side == "left" or side == "right" {
+              y = p.at(0)
+              full-length = axis-frame.width
+            }
+            if side == "top" { y = 1 }
+            if side == "top" or side == "bottom" {
+              x = p.at(0)
+              full-length = axis-frame.height
+            }
+
+            place(dx: 0cm, dy: 0cm,
+              line(start: (width * x, height - height * y),
+                   length: if t.grid { full-length } else { 10pt },
+                   angle: angle,
+                   stroke: p-dict-get(t, "stroke", .5pt)))
+          }
+
+          render(t.side, t.angle)
+          if t.mirror {
+            render(other-side.at(t.side), t.angle + 180deg)
+          }
         }
-        
-        let pos = tic-position(axis, tics, value, side)
-        render-tic-mark(axis, tics, pos.position, pos.angle)
       }
     }
 
@@ -289,44 +256,7 @@
       /* Render axes */
       place(dx: axis-frame.x, dy: axis-frame.y, {
         box(width: axis-frame.width, height: axis-frame.height, {
-          /* Render tics */
-          for name, tic in tics {
-            if tic != none {
-              let side = p-dict-get(tic, "side", none)
-              if side == none {
-                side = tic-side.at(name)
-              }
-
-              let tics-frame = none
-              if side == "left" or side == "right" {
-                tics-frame = (
-                  x: 0%,
-                  y: data-frame.y - axis-frame.y,
-                  width: 100%,
-                  height: data-frame.height
-                )
-              } else {
-                tics-frame = (
-                  x: data-frame.x - axis-frame.x,
-                  y: 0%,
-                  width: data-frame.width,
-                  height: 100%
-                )
-              }
-
-              place(dx: tics-frame.x, dy: tics-frame.y,
-                box(width: tics-frame.width, height: tics-frame.height, {
-                  let axis = axes.at(name)
-                  render-tics(axis, tic, side, mirror: false)
-
-                  if p-dict-get(tic, "mirror", plot-defaults.tic-mirror) {
-                    side = other-side.at(side)
-                    render-tics(axis, tic, side, mirror: true)
-                  }
-                })
-              )
-            }
-          }
+          render-tics()
 
           /* Render border */
           place(dx: 0cm, dy: 0cm, {
@@ -361,10 +291,10 @@
       })
     })
 
-    let x-tic-labels  = plot-tics.render-labels(normalized-tics.x, top, data-frame.width)
-    let x2-tic-labels = plot-tics.render-labels(normalized-tics.x2, top, data-frame.width)
-    let y-tic-labels  = plot-tics.render-labels(normalized-tics.y, right, data-frame.height)
-    let y2-tic-labels = plot-tics.render-labels(normalized-tics.y2, left, data-frame.height)
+    let x-tic-labels  = plot-tics.render-labels(tics.x.tics,  bottom, data-frame.width)
+    let x2-tic-labels = plot-tics.render-labels(tics.x2.tics, top, data-frame.width)
+    let y-tic-labels  = plot-tics.render-labels(tics.y.tics,  right, data-frame.height)
+    let y2-tic-labels = plot-tics.render-labels(tics.y2.tics, left, data-frame.height)
 
     grid(columns: (auto, auto, auto, auto, auto),
          rows: (auto, auto, auto, auto, auto),

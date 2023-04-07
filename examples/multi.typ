@@ -1,4 +1,4 @@
-#import "../plot.typ": plot, plot-data
+#import "../plot.typ": plot
 
 #set page(width: 12cm, height: 10cm)
 
@@ -25,7 +25,7 @@
       y-label: [Temp. in C#sym.degree],
       y2-tics: (every: 1, mirror: false),
       y2-label: [Humidity in %],
-      plot-data(data-temperature, y-axis: "y", stroke: red, mark: "square"),
-      plot-data(data-humidity, y-axis: "y2", stroke: blue),
+      (data: data-temperature, y-axis: "y", stroke: red, mark: "square"),
+      (data: data-humidity, y-axis: "y2", stroke: blue),
  )
 

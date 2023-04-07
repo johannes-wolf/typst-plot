@@ -19,7 +19,7 @@
 /**
  * Returns point at side `v` + `h` of rect `rect`.
  * @param v string  "left"|"right"|"center"
- * @param h string  "tob"|"bottom"|"center"
+ * @param h string  "top"|"bottom"|"center"
  * @return array
  */
 #let rect-get-point(rect, v: "center", h: "center") = {
