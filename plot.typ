@@ -95,8 +95,8 @@
      * Returns new range as tuple (x-range, y-range)
      */
     let autorange-axes(d) = {
-      let x-axis = d.x-axis
-      let y-axis = d.y-axis
+      let x-axis = p-dict-get(axes, d.x-axis, (:))
+      let y-axis = p-dict-get(axes, d.y-axis, (:))
       let x-range = p-dict-get(x-axis, "range", auto)
       let y-range = p-dict-get(y-axis, "range", auto)
       if x-range == auto or y-range == auto {
@@ -125,13 +125,35 @@
         return (x: x-range, y: y-range)
       }
 
-      return (x: x-axis.range, y: y-axis.range)
+      return (x: x-range, y: y-range)
     }
     
-    for sub-data in plots {
-      let ranges = autorange-axes(sub-data)
-      axes.at(sub-data.x-axis).range = ranges.x
-      axes.at(sub-data.y-axis).range = ranges.y
+    /* Compute range */
+    {
+      let computed-range = (:) 
+      for sub-data in plots {
+        let x-axis = sub-data.x-axis
+        let y-axis = sub-data.y-axis
+
+        let ranges = autorange-axes(sub-data)
+
+        if not x-axis in computed-range {
+          computed-range.insert(x-axis, (ranges.x.at(0), ranges.x.at(1)))
+        } else {
+          computed-range.at(x-axis).at(0) = (calc.min(computed-range.at(x-axis).at(0), ranges.x.at(0)))
+          computed-range.at(x-axis).at(1) = (calc.max(computed-range.at(x-axis).at(1), ranges.x.at(1)))
+        }
+        if not y-axis in computed-range {
+          computed-range.insert(y-axis, (ranges.y.at(0), ranges.y.at(1)))
+        } else {
+          computed-range.at(y-axis).at(0) = (calc.min(computed-range.at(y-axis).at(0), ranges.y.at(0)))
+          computed-range.at(y-axis).at(1) = (calc.max(computed-range.at(y-axis).at(1), ranges.y.at(1)))
+        }
+      }
+
+      for name, r in computed-range {
+        axes.at(name).range = r
+      }
     }
 
     /* All tics */
