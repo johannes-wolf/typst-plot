@@ -79,18 +79,6 @@
       y: y-axis, y2: y2-axis,
     )
 
-    /* Default axis side */
-    let tic-side = (
-      x: "bottom", x2: "top",
-      y: "left", y2: "right",
-    )
-
-    /* Map side to opposite side */
-    let other-side = (
-      left: "right", right: "left",
-      top: "bottom", bottom: "top",
-    )
-
     /* Calculate unset axis ranges.
      * Returns new range as tuple (x-range, y-range)
      */
@@ -188,37 +176,6 @@
       }
     }
 
-    let render-tics() = {
-      for (name, t) in tics {
-        for p in t.tics {
-          let render(side, angle) = {
-            let x = 0; let y = 0; let full-length = 0;
-            if side == "right" { x = 1 }
-            if side == "left" or side == "right" {
-              y = p.at(0)
-              full-length = axis-frame.width
-            }
-            if side == "top" { y = 1 }
-            if side == "top" or side == "bottom" {
-              x = p.at(0)
-              full-length = axis-frame.height
-            }
-
-            place(dx: 0cm, dy: 0cm,
-              line(start: (width * x, height - height * y),
-                   length: if t.grid { full-length } else { 10pt },
-                   angle: angle,
-                   stroke: p-dict-get(t, "stroke", .5pt)))
-          }
-
-          render(t.side, t.angle)
-          if t.mirror {
-            render(other-side.at(t.side), t.angle + 180deg)
-          }
-        }
-      }
-    }
-
     let content = box(width: width, height: height, {
       /* Plot point array */
       let stroke-data(data, stroke, n) = {
@@ -278,7 +235,7 @@
       /* Render axes */
       place(dx: axis-frame.x, dy: axis-frame.y, {
         box(width: axis-frame.width, height: axis-frame.height, {
-          render-tics()
+          plot-tics.render-marks(tics, axis-frame)
 
           /* Render border */
           place(dx: 0cm, dy: 0cm, {
@@ -313,10 +270,14 @@
       })
     })
 
-    let x-tic-labels  = plot-tics.render-labels(tics.x.tics,  bottom, data-frame.width)
-    let x2-tic-labels = plot-tics.render-labels(tics.x2.tics, top, data-frame.width)
-    let y-tic-labels  = plot-tics.render-labels(tics.y.tics,  right, data-frame.height)
-    let y2-tic-labels = plot-tics.render-labels(tics.y2.tics, left, data-frame.height)
+    let x-tic-labels  = plot-tics.render-labels(tics.x.tics,  bottom,
+      data-frame.width)
+    let x2-tic-labels = plot-tics.render-labels(tics.x2.tics, top,
+      data-frame.width)
+    let y-tic-labels  = plot-tics.render-labels(tics.y.tics,  right,
+      data-frame.height)
+    let y2-tic-labels = plot-tics.render-labels(tics.y2.tics, left,
+      data-frame.height)
 
     block(breakable: false,
       grid(columns: (auto, auto, auto, auto, auto),

@@ -59,10 +59,15 @@
   return pos
 }
 
-#let render-labels(tic-list, talign, length) = style(st => {
-  if tic-list == none or tic-list.len() == 0 { return none }
+/// Render tic labels
+///
+/// @param tics array    List of tics (see tic-list)
+/// @param side side     Axis side
+/// @param lenght lenght Axis length
+#let render-labels(tics, side, length) = style(st => {
+  if tics == none or tics.len() == 0 { return none }
 
-  let labels = tic-list
+  let labels = tics
     .map(t => {
       let label = [#t.at(1)]
       return (pos: t.at(0), label: label, bounds: measure(label, st))
@@ -78,12 +83,12 @@
     .sorted()
     .last()
   
-  if talign == left or talign == right {
+  if side == left or side == right {
     box(width: max-width, height: length, {
       for t in labels {
         place(dx: 0cm,
               dy: length - t.pos * length - t.bounds.height / 2,
-              box(width: 100%, align(talign, t.label)))
+              box(width: 100%, align(side, t.label)))
       }
     })
   } else {
@@ -96,3 +101,47 @@
     })
   }
 })
+
+/// Render ticmarks on frame border
+///
+/// @param tics array  List of tics (see tic-list)
+/// @param frame rect  Bounds to render into
+#let render-marks(tics, frame) = {
+  let width = frame.width
+  let height = frame.height
+
+  let other-side = (
+    left: "right", right: "left",
+    top: "bottom", bottom: "top",
+  )
+  
+  for (name, t) in tics {
+    for p in t.tics {
+      let render(side, angle) = {
+        let x = 0; let y = 0; let full-length = 0;
+        if side == "right" { x = 1 }
+        if side == "left" or side == "right" {
+          y = p.at(0)
+          full-length = frame.width
+        }
+        if side == "top" { y = 1 }
+        if side == "top" or side == "bottom" {
+          x = p.at(0)
+          full-length = frame.height
+        }
+
+        place(dx: 0cm, dy: 0cm,
+          line(start: (width * x, height - height * y),
+               length: if t.grid { full-length } else { 10pt },
+               angle: angle,
+               stroke: p-dict-get(t, "stroke", .5pt)))
+      }
+
+      render(t.side, t.angle)
+      if t.mirror {
+        render(other-side.at(t.side), t.angle + 180deg)
+      }
+    }
+  }
+}
+
