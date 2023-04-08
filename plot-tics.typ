@@ -60,20 +60,23 @@
 }
 
 #let render-labels(tic-list, talign, length) = style(st => {
-  if tic-list == none { return none }
+  if tic-list == none or tic-list.len() == 0 { return none }
 
-  let max-width = 0cm
-  let max-height = 0cm
+  let labels = tic-list
+    .map(t => {
+      let label = [#t.at(1)]
+      return (pos: t.at(0), label: label, bounds: measure(label, st))
+    })
 
-  let labels = ()
-  for t in tic-list {
-    let label = [#t.at(1)]
-    let bounds = measure(label, st)
+  let max-width = labels
+    .map(t => t.bounds.width)
+    .sorted()
+    .last()
 
-    labels.push((pos: t.at(0), label: label, bounds: bounds))
-    max-width = calc.max(bounds.width, max-width)
-    max-height = calc.max(bounds.height, max-height)
-  }
+  let max-height = labels
+    .map(t => t.bounds.height)
+    .sorted()
+    .last()
   
   if talign == left or talign == right {
     box(width: max-width, height: length, {
