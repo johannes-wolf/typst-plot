@@ -151,7 +151,7 @@
         }
       }
 
-      for name, r in computed-range {
+      for (name, r) in computed-range {
         axes.at(name).range = r
       }
     }
@@ -165,7 +165,7 @@
     )
 
     /* Compute tic positions */
-    for name, t in tics {
+    for (name, t) in tics {
       if t != none {
         let key = name + "-tics"
         if key in data.named() {
@@ -189,7 +189,7 @@
     }
 
     let render-tics() = {
-      for name, t in tics {
+      for (name, t) in tics {
         for p in t.tics {
           let render(side, angle) = {
             let x = 0; let y = 0; let full-length = 0;
