@@ -318,29 +318,31 @@
     let y-tic-labels  = plot-tics.render-labels(tics.y.tics,  right, data-frame.height)
     let y2-tic-labels = plot-tics.render-labels(tics.y2.tics, left, data-frame.height)
 
-    grid(columns: (auto, auto, auto, auto, auto),
-         rows: (auto, auto, auto, auto, auto),
-         gutter: .5em,
-      /* X2 Label */
-      [], [], align(center, x2-label), [], [],
+    block(breakable: false,
+      grid(columns: (auto, auto, auto, auto, auto),
+           rows: (auto, auto, auto, auto, auto),
+           gutter: .5em,
+        /* X2 Label */
+        [], [], align(center, x2-label), [], [],
 
-      /* X2 Tics */
-      [], [], x2-tic-labels, [], [],
+        /* X2 Tics */
+        [], [], x2-tic-labels, [], [],
 
-      /* Y Label */
-      align(center + horizon, rotate-bbox(y-label, -90deg)),
+        /* Y Label */
+        align(center + horizon, rotate-bbox(y-label, -90deg)),
 
-      y-tic-labels,
-      content,
-      y2-tic-labels,
+        y-tic-labels,
+        content,
+        y2-tic-labels,
 
-      /* Y2 Label */
-      align(center + horizon, rotate-bbox(y2-label, -90deg)),
+        /* Y2 Label */
+        align(center + horizon, rotate-bbox(y2-label, -90deg)),
 
-      /* X Tics */
-      [], [], x-tic-labels, [], [],
+        /* X Tics */
+        [], [], x-tic-labels, [], [],
 
-      /* X Label */
-      [], [], align(center, x-label), [], [])
+        /* X Label */
+        [], [], align(center, x-label), [], [])
+    )
   })
 }
