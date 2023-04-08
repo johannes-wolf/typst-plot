@@ -36,7 +36,8 @@
 /// Axis: Set {x,y,x2,y2}-axis to dictionary:
 ///   - range array    Range from low to high (low, high)
 ///
-#let plot(x-axis: (:),
+#let plot(title: none,
+          x-axis: (:),
           y-axis: (:),
           x2-axis: (:),
           y2-axis: (:),
@@ -48,6 +49,8 @@
           
           width: 8cm,
           height: 8cm,
+
+          fill: none,
           border-stroke: black + .5pt,
 
           /* Padding */
@@ -176,7 +179,7 @@
       }
     }
 
-    let content = box(width: width, height: height, {
+    let content = box(width: width, height: height, fill: fill, {
       /* Plot point array */
       let stroke-data(data, stroke, n) = {
         let x-range = axes.at(data.x-axis).range
@@ -281,8 +284,10 @@
 
     block(breakable: false,
       grid(columns: (auto, auto, auto, auto, auto),
-           rows: (auto, auto, auto, auto, auto),
+           rows: (auto, auto, auto, auto, auto, auto),
            gutter: .5em,
+        /* Title */
+        [], [], align(center, title), [], [],
         /* X2 Label */
         [], [], align(center, x2-label), [], [],
 
