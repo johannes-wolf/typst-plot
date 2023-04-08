@@ -4,4 +4,5 @@
 
 #plot((stroke: blue, data: data),
       x-tics: (every: .2),
-      y-tics: (every: 2))
+      y-tics: (every: 2),
+      title: [Inv. cum. normal])
