@@ -72,7 +72,7 @@
   })
 
   style(st => {
-    let frame = (x: 0cm, y: 0cm, width: width, height: height)
+    let frame = (x: 0cm, y: 0cm, width: 100%, height: 100%)
     let axis-frame = rect-inset(frame, padding)
     let data-frame = axis-frame
 
@@ -179,7 +179,7 @@
       }
     }
 
-    let content = box(width: width, height: height, fill: fill, {
+    let content = box(width: 100%, height: 100%, fill: fill, {
       /* Plot point array */
       let stroke-data(data, stroke, n) = {
         let x-range = axes.at(data.x-axis).range
@@ -283,8 +283,8 @@
       data-frame.height)
 
     block(breakable: false,
-      grid(columns: (auto, auto, auto, auto, auto),
-           rows: (auto, auto, auto, auto, auto, auto),
+      grid(columns: (auto, auto, width, auto, auto),
+           rows: (auto, auto, auto, height, auto, auto),
            gutter: .5em,
         /* Title */
         [], [], align(center, title), [], [],
