@@ -1,0 +1,4 @@
+[submodule "typst-canvas"]
+	path = typst-canvas
+	url = https://github.com/johannes-wolf/typst-canvas.git
+	branch = master
