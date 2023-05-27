@@ -14,7 +14,7 @@
   if "stroke" in data and data.stroke != auto {
     return data.stroke
   }
-  return defaults.colors.at(calc.mod(n, defaults.colors.len()))
+  return defaults.colors.at(calc.rem(n, defaults.colors.len()))
 }
 
 /// Plot a line chart
