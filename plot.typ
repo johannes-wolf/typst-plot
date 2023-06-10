@@ -11,7 +11,7 @@
 
 /* Returns the stroke color if set, or the nth default color */
 #let get-plot-color(data, n) = {
-  if "stroke" in data and data.stroke != auto {
+  if "stroke" in data and not data.stroke in (auto, none) {
     return data.stroke
   }
   return defaults.colors.at(calc.rem(n, defaults.colors.len()))
