@@ -22,9 +22,9 @@
       x-tics: (every: 2),
       x-label: [Time in hours],
       y-tics: (every: 2, mirror: false),
-      y-label: [Temp. in C#sym.degree],
+      y-label: box(width: 10cm, [Temp. in C#sym.degree]),
       y2-tics: (every: 1, mirror: false),
-      y2-label: [Humidity in %],
+      y2-label: box(width: 10cm, [Humidity in %]),
       (data: data-temperature, y-axis: "y", stroke: red, mark: "square"),
       (data: data-humidity, y-axis: "y2", stroke: blue),
  )
