@@ -28,6 +28,7 @@
 ///
 /// Tics: Set {x,y,x2,y2}-tics to dictionary:
 ///   - every  number  Draw tic every n values
+///   - limit  number  Set tic limit for tics generated using `every`
 ///   - tics   array   Place tics at values
 ///   - mirror bool    Mirror tics to opposite side
 ///   - grid   bool    Draw tics as grid lines

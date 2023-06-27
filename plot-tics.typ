@@ -1,5 +1,8 @@
 #import "plot-util.typ": *
 
+/// Maximum number of tics
+#let tic-limit = 100
+
 
 /// Get tick label content
 ///
@@ -30,8 +33,17 @@
   if "every" in tics and tics.every != none {
     let scale = 1 / tics.every
     let r = int(a-range.at(1) * scale + .5) - int(a-range.at(0) * scale)
-    for t in range(int(a-range.at(0) * scale),
-                   int(a-range.at(1) * scale + 1.5)) {
+    let n = range(int(a-range.at(0) * scale),
+                  int(a-range.at(1) * scale + 1.5))
+
+    let tic-limit = if "limit" in tics {
+      tics.limit
+    } else {
+      tic-limit
+    }
+    assert(n.len() <= tic-limit,
+           message: "Number of tics exceed threshold. Set 'every' to a suitable value or use a fixed 'tics' list or override the limit by setting 'limit'.")
+    for t in n {
       let v = ((t / scale) - a-off) / a-delta
       if v >= 0 and v <= 1 {
         pos.push((v, plot-tic-get-label(tics, t / scale)))
