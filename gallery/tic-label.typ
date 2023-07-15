@@ -1,5 +1,4 @@
-#import "../plot.typ": plot
-#import "../plot-sample.typ": *
+#import "@local/typst-plot:0.0.1": plot, sample
 
 #set page(width: 12cm, height: 10cm)
 
