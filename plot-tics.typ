@@ -75,7 +75,7 @@
 ///
 /// @param tics array    List of tics (see tic-list)
 /// @param side side     Axis side
-/// @param lenght lenght Axis length
+/// @param length length Axis length
 #let render-labels(tics, side, length) = style(st => {
   if tics == none or tics.len() == 0 { return none }
 
