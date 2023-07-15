@@ -1,0 +1,10 @@
+[package]
+name = "typst-plot"
+version = "0.0.1"
+repository = "https://github.com/johannes-wolf/typst-plot"
+entrypoint = "lib.typ"
+authors = [
+  "Johannes Wolf <https://github.com/johannes-wolf>"
+]
+license = "GPL-3.0"
+description = "A tiny Plotting library for Typst."
