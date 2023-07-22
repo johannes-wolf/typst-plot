@@ -1,9 +1,9 @@
-#import "@local/typst-plot:0.0.1": plot, sample
+#import "@local/typst-plot:0.0.1": plot, sample, axis
 
 #set page(width: 12cm, height: 10cm)
 
-#plot(y-axis: (range: (-1, 1)),
-      x-axis: (range: (-1, 1)),
+#plot(left: axis(min: -1, max: 1),
+      bottom: axis(min: -1, max: 1),
       sample(t => (0 + calc.cos(t) * t/40, -1 + calc.sin(t) * t/40),
              min: 0, max: 5*2 * calc.pi, samples: 400),
       sample(t => (0 + calc.cos(t) * t/40,  1 + calc.sin(t) * t/40),

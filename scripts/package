@@ -7,10 +7,8 @@ PKG_PREFIX="typst-plot"
 files=(
   plot.typ
   plot-mark.typ
-  plot-line.typ
-  plot-tics.typ
-  plot-util.typ
   plot-sample.typ
+  standalone.typ
   lib.typ
   typst.toml
   LICENSE

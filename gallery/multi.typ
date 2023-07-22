@@ -1,4 +1,4 @@
-#import "@local/typst-plot:0.0.1": plot
+#import "@local/typst-plot:0.0.1": plot, axis
 
 #set page(width: 12cm, height: 10cm)
 
@@ -17,15 +17,17 @@
   (24, 3),
 )
 
+#let x = axis(tics: (step: 2), label:
+  [Time in hours])
+#let y = axis(tics: (step: 2), label:
+  [Temp. in C#sym.degree])
+#let y2 = axis(tics: (step: 1), label:
+  [Humidity in %])
+
 #plot(width: 8cm,
       height: 6cm, 
-      x-tics: (every: 2),
-      x-label: [Time in hours],
-      y-tics: (every: 2, mirror: false),
-      y-label: box(width: 10cm, [Temp. in C#sym.degree]),
-      y2-tics: (every: 1, mirror: false),
-      y2-label: box(width: 10cm, [Humidity in %]),
-      (data: data-temperature, y-axis: "y", stroke: red, mark: "square"),
-      (data: data-humidity, y-axis: "y2", stroke: blue),
+      bottom: x,
+      left: y, right: y2,
+      (data: data-temperature, axes: ("bottom", "left"), style: (stroke: red), mark: "square"),
+      (data: data-humidity, axes: ("bottom", "right"), style: (stroke: blue)),
  )
-

@@ -1,5 +1,5 @@
 #set page(width: auto, height: auto)
-#import "../../plot.typ": plot
+#import "../../standalone.typ": plot
 #import "../../plot-sample.typ": sample
 
 #box(stroke: 2pt + red, {
