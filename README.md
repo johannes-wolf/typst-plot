@@ -1,3 +1,11 @@
+# Note
+**I have implemented improved plotting in [CeTZ](https://github.com/johannes-wolf/typst-canvas)'s "plot" library. This package will not receive any new features. Please use CeTZ as an replacement for typst-plot.**
+Examples of CeTZ plot and chart capabilities can be found here:
+- [CeTZ main page](https://github.com/johannes-wolf/typst-canvas)
+- [CeTZ manual](https://github.com/johannes-wolf/typst-canvas/blob/master/manual.pdf?raw=true)
+- [CeTZ plot test image](https://github.com/johannes-wolf/typst-canvas/blob/master/tests/plot/ref.png)
+- [CeTZ chart test image](https://github.com/johannes-wolf/typst-canvas/blob/master/tests/chart/ref.png)
+
 # Typst Plotting Library
 A simple [Typst](https://typst.app) library for plotting line charts.
 
